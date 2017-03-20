@@ -24,6 +24,20 @@
     return self;
 }
 
++ (NSDictionary *)mapToStrings:(NSDictionary *)dictionary
+{
+    NSMutableDictionary *mapped = [NSMutableDictionary dictionaryWithDictionary:dictionary];
+    
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *obj, BOOL *stop) {
+        id data = [mapped objectForKey:key];
+        if (![data isKindOfClass:[NSString class]]) {
+            [mapped setObject:[NSString stringWithFormat:@"%@", data] forKey:key];
+        }
+    }];
+    
+    return [mapped copy];
+}
+
 - (void)identify:(SEGIdentifyPayload *)payload
 {
     if (payload.userId) {
@@ -31,7 +45,8 @@
         SEGLog(@"[FIRAnalytics setUserId:%@]", payload.userId);
     }
     
-    [payload.traits enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop){
+    NSDictionary *mappedTraits = [SEGFirebaseIntegration mapToStrings:payload.traits];
+    [mappedTraits enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *obj, BOOL *stop) {
         NSString *trait = [key stringByReplacingOccurrencesOfString:@" " withString:@"_"];
         NSString *value = [obj stringByReplacingOccurrencesOfString:@" " withString:@"_"];
         [FIRAnalytics setUserPropertyString:value forName:trait];
